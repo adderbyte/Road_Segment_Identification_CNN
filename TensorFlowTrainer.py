@@ -10,16 +10,16 @@ import tensorflow as tf
 class TensorFlowTrainer:
     """Doc"""
 
-    def __init__(self):
+    def __init__(self, training_size=100, batch_size=256, img_patch_size=8):
         """Load the model"""
 
         self.session = None
 
         self.train_dir = "..\\tensorflow"
-        self.training_size = 100
-        self.batch_size = 64
-        self.img_patch_size = 16
-        self.num_channels = 3
+        self.training_size = training_size
+        self.batch_size = batch_size
+        self.img_patch_size = img_patch_size
+        self.num_channels = 4
         self.num_labels = 2
         self.seed = 66478
         self.pixel_depth = 255
@@ -30,7 +30,6 @@ class TensorFlowTrainer:
 
         self.train_data_node = None
         self.train_labels_node = None
-        self.train_all_data_node = None
         self.conv1_weights = None
         self.conv1_biases = None
         self.conv2_weights = None
@@ -45,37 +44,7 @@ class TensorFlowTrainer:
         self.train_labels = self.extract_labels(self.train_labels_filename, self.training_size)
         self.train_size = self.train_labels.shape[0]
 
-    def set_training_size(self, size):
-        self.training_size = size
-
-    def set_batch_size(self, size):
-        self.batch_size = size
-
-    def set_img_patch_size(self, size):
-        self.img_patch_size = size
-
-    def load_data(self):
-        c0 = 0
-        c1 = 0
-        for i in range(len(self.train_labels)):
-            if self.train_labels[i][0] == 1:
-                c0 += 1
-            else:
-                c1 += 1
-        print('Number of data points per class: c0 = ' + str(c0) + ' c1 = ' + str(c1))
-
-        print('Balancing training data...')
-        min_c = min(c0, c1)
-        idx0 = [i for i, j in enumerate(self.train_labels) if j[0] == 1]
-        idx1 = [i for i, j in enumerate(self.train_labels) if j[1] == 1]
-        new_indices = idx0[0:min_c] + idx1[0:min_c]
-        print(len(new_indices))
-        print(self.train_data.shape)
-        self.train_data = self.train_data[new_indices, :, :, :]
-        self.train_labels = self.train_labels[new_indices]
-
-        self.train_size = self.train_labels.shape[0]
-
+    def load_data(self, filter_size=5):
         c0 = 0
         c1 = 0
         for i in range(len(self.train_labels)):
@@ -94,18 +63,17 @@ class TensorFlowTrainer:
         self.train_labels_node = tf.placeholder(
             tf.float32,
             shape=(self.batch_size, self.num_labels))
-        self.train_all_data_node = tf.constant(self.train_data)
 
         # The variables below hold all the trainable weights. They are passed an
         # initial value which will be assigned when when we call:
         # {tf.initialize_all_variables().run()}
         self.conv1_weights = tf.Variable(
-            tf.truncated_normal([5, 5, self.num_channels, 32],  # 5x5 filter, depth 32.
+            tf.truncated_normal([filter_size, filter_size, self.num_channels, 32],  # 5x5 filter, depth 32.
                                 stddev=0.1,
                                 seed=self.seed))
         self.conv1_biases = tf.Variable(tf.zeros([32]))
         self.conv2_weights = tf.Variable(
-            tf.truncated_normal([5, 5, 32, 64],
+            tf.truncated_normal([filter_size, filter_size, 32, 64],
                                 stddev=0.1,
                                 seed=self.seed))
         self.conv2_biases = tf.Variable(tf.constant(0.1, shape=[64]))
@@ -120,18 +88,16 @@ class TensorFlowTrainer:
                                 seed=self.seed))
         self.fc2_biases = tf.Variable(tf.constant(0.1, shape=[self.num_labels]))
 
-    def train(self, num_epochs=10, save_predictionbs=False, restore=False):
+    def train(self, num_epochs=10, save_predictions=False, restore=False):
 
         # Training computation: logits + cross-entropy loss.
         logits = self.model(self.train_data_node, True)  # BATCH_SIZE*NUM_LABELS
         # print 'logits = ' + str(logits.get_shape()) + ' train_labels_node = ' + str(train_labels_node.get_shape())
-        loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(
-            logits, self.train_labels_node))
+        loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits, self.train_labels_node))
         tf.scalar_summary('loss', loss)
 
         all_params_node = [self.conv1_weights, self.conv1_biases, self.conv2_weights, self.conv2_biases,
-                           self.fc1_weights,
-                           self.fc1_biases, self.fc2_weights, self.fc2_biases]
+                           self.fc1_weights, self.fc1_biases, self.fc2_weights, self.fc2_biases]
         all_params_names = ['conv1_weights', 'conv1_biases', 'conv2_weights', 'conv2_biases', 'fc1_weights',
                             'fc1_biases', 'fc2_weights', 'fc2_biases']
         all_grads_node = tf.gradients(loss, all_params_node)
@@ -145,7 +111,7 @@ class TensorFlowTrainer:
         regularizers = (tf.nn.l2_loss(self.fc1_weights) + tf.nn.l2_loss(self.fc1_biases) +
                         tf.nn.l2_loss(self.fc2_weights) + tf.nn.l2_loss(self.fc2_biases))
         # Add the regularization term to the loss.
-        loss += 5e-4 * regularizers
+        loss += 5e-6 * regularizers
 
         # Optimizer: set up a variable that's incremented once per batch and
         # controls the learning rate decay.
@@ -160,8 +126,8 @@ class TensorFlowTrainer:
         tf.scalar_summary('learning_rate', learning_rate)
 
         # Use simple momentum for the optimization.
-        optimizer = tf.train.MomentumOptimizer(learning_rate, 0.0).minimize(loss, global_step=batch)
-        # optimizer = tf.train.AdadeltaOptimizer(learning_rate).minimize(loss, global_step=batch)
+        # optimizer = tf.train.MomentumOptimizer(learning_rate, 0.0).minimize(loss, global_step=batch)
+        optimizer = tf.train.AdadeltaOptimizer(0.001).minimize(loss, global_step=batch)
 
         # Predictions for the minibatch, validation set and test set.
         train_prediction = tf.nn.softmax(logits)
@@ -189,6 +155,7 @@ class TensorFlowTrainer:
                 training_indices = range(self.train_size)
 
                 for iepoch in range(num_epochs):
+                    print('\nStarting epoch ', iepoch)
 
                     # Permute training indices
                     perm_indices = np.random.permutation(training_indices)
@@ -240,7 +207,7 @@ class TensorFlowTrainer:
                 img = mpimg.imread(image_filename)
                 labels_groundtruth = np.append(labels_groundtruth, np.reshape(img, (-1, 1)))
 
-                if save_predictionbs:
+                if save_predictions:
                     Image.fromarray(pimg).save(prediction_training_dir + "prediction_" + str(i) + ".png")
                     oimg = self.get_prediction_with_overlay(self.train_data_filename, i)
                     oimg.save(prediction_training_dir + "overlay_" + str(i) + ".png")
@@ -315,7 +282,9 @@ class TensorFlowTrainer:
         return v
 
     def get_prediction(self, img):
-        data = np.asarray(self.img_crop(img, self.img_patch_size, self.img_patch_size))
+        k = Image.fromarray(self.img_float_to_uint8(img)).convert('CMYK')
+
+        data = np.asarray(self.img_crop(np.float32(np.array(k) / 255), self.img_patch_size, self.img_patch_size))
         data_node = tf.constant(data)
         output = tf.nn.softmax(self.model(data_node))
         output_prediction = self.session.run(output)
@@ -396,6 +365,25 @@ class TensorFlowTrainer:
         rimg = (rimg / np.max(rimg) * self.pixel_depth).round().astype(np.uint8)
         return rimg
 
+    def extend_img_set(self, img_set, is_labels=False):
+        new_set = []
+
+        for img in img_set:
+            k = Image.fromarray(self.img_float_to_uint8(img))
+            ll = [
+                k,
+                k.resize((800, 800)).rotate(90)
+            ]
+
+            for l in ll:
+                if is_labels:
+                    new_set.append(np.array(l))
+                else:
+                    l = l.convert('CMYK')
+                    new_set.append(np.array(l) / self.pixel_depth)
+
+        return new_set
+
     def extract_data(self, filename, num_images):
         """
         Extract the images into a 4D tensor [image index, y, x, channels].
@@ -412,6 +400,7 @@ class TensorFlowTrainer:
             else:
                 print('File ' + image_filename + ' does not exist')
 
+        imgs = self.extend_img_set(imgs)
         num_images = len(imgs)
         # img_width = imgs[0].shape[0]
         # img_height = imgs[0].shape[1]
@@ -435,6 +424,7 @@ class TensorFlowTrainer:
             else:
                 print('File ' + image_filename + ' does not exist')
 
+        gt_imgs = self.extend_img_set(gt_imgs, is_labels=True)
         num_images = len(gt_imgs)
         gt_patches = [self.img_crop(gt_imgs[i], self.img_patch_size, self.img_patch_size) for i in range(num_images)]
         data = np.asarray([gt_patches[i][j] for i in range(len(gt_patches)) for j in range(len(gt_patches[i]))])
@@ -464,7 +454,7 @@ class TensorFlowTrainer:
     def value_to_class(v):
         foreground_threshold = 0.25  # percentage of pixels > 1 required to assign a foreground label to a patch
         df = np.sum(v)
-        if df > foreground_threshold:
+        if df >= foreground_threshold:
             return [0, 1]
         else:
             return [1, 0]
