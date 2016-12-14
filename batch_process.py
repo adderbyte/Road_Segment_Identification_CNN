@@ -45,7 +45,7 @@ e8 = 14
 e9 = 15
 
 # List files
-dir_path = 'F:\\Development\\pcml\\training\\images_ext'
+dir_path = 'F:\\Development\\pcml\\training\\groundtruth_ext'
 files = [os.path.join(dir_path, f) for f in os.listdir(dir_path) if os.path.isfile(os.path.join(dir_path, f))]
 
 for filepath in files:
@@ -129,13 +129,13 @@ for filepath in files:
     imgr9.save(name + '_' + str(r9) + '.png')
     imgr10.save(name + '_' + str(r10) + '.png')
     # contrast
-    enh3.save(name + '_' + str(e3) + '.png')
-    enh4.save(name + '_' + str(e4) + '.png')
-    enh5.save(name + '_' + str(e5) + '.png')
-    enh6.save(name + '_' + str(e6) + '.png')
-    enh7.save(name + '_' + str(e7) + '.png')
-    enh8.save(name + '_' + str(e8) + '.png')
-    enh9.save(name + '_' + str(e9) + '.png')
+    # enh3.save(name + '_' + str(e3) + '.png')
+    # enh4.save(name + '_' + str(e4) + '.png')
+    # enh5.save(name + '_' + str(e5) + '.png')
+    # enh6.save(name + '_' + str(e6) + '.png')
+    # enh7.save(name + '_' + str(e7) + '.png')
+    # enh8.save(name + '_' + str(e8) + '.png')
+    # enh9.save(name + '_' + str(e9) + '.png')
 
     # increment the number count to xrm
     k = k + 1

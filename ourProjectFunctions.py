@@ -48,9 +48,9 @@ def value_to_class_for_tensor_flow(v):
     foreground_threshold = 0.25  # percentage of pixels > 1 required to assign a foreground label to a patch
     df = np.sum(v)
     if df > foreground_threshold:
-        return [1, 0]
-    else:
         return [0, 1]
+    else:
+        return [1, 0]
 
 
 # Cropping function will be used to generate the patches
