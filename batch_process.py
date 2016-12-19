@@ -45,7 +45,7 @@ e8 = 14
 e9 = 15
 
 # List files
-dir_path = 'F:\\Development\\pcml\\training\\groundtruth_ext'
+dir_path = 'F:\\Development\\pcml\\training\\images_ext'
 files = [os.path.join(dir_path, f) for f in os.listdir(dir_path) if os.path.isfile(os.path.join(dir_path, f))]
 
 for filepath in files:
@@ -70,9 +70,9 @@ for filepath in files:
 
     # rotation
 
-    imgr1 = image.rotate(25, resample=0, expand=0)
-    imgr2 = image.rotate(50, resample=0, expand=0)
-    imgr3 = image.rotate(75, resample=0, expand=0)
+    imgr1 = image.rotate(90, resample=0, expand=0)
+    imgr2 = image.rotate(180, resample=0, expand=0)
+    imgr3 = image.rotate(270, resample=0, expand=0)
     imgr4 = image.rotate(100, resample=0, expand=0)
     imgr5 = image.rotate(120, resample=0, expand=0)
     imgr6 = image.rotate(140, resample=0, expand=0)
@@ -121,13 +121,13 @@ for filepath in files:
     imgr1.save(name + '_' + str(r1) + '.png')
     imgr2.save(name + '_' + str(r2) + '.png')
     imgr3.save(name + '_' + str(r3) + '.png')
-    imgr4.save(name + '_' + str(r4) + '.png')
-    imgr5.save(name + '_' + str(r5) + '.png')
-    imgr6.save(name + '_' + str(r6) + '.png')
-    imgr7.save(name + '_' + str(r7) + '.png')
-    imgr8.save(name + '_' + str(r8) + '.png')
-    imgr9.save(name + '_' + str(r9) + '.png')
-    imgr10.save(name + '_' + str(r10) + '.png')
+    # imgr4.save(name + '_' + str(r4) + '.png')
+    # imgr5.save(name + '_' + str(r5) + '.png')
+    # imgr6.save(name + '_' + str(r6) + '.png')
+    # imgr7.save(name + '_' + str(r7) + '.png')
+    # imgr8.save(name + '_' + str(r8) + '.png')
+    # imgr9.save(name + '_' + str(r9) + '.png')
+    # imgr10.save(name + '_' + str(r10) + '.png')
     # contrast
     # enh3.save(name + '_' + str(e3) + '.png')
     # enh4.save(name + '_' + str(e4) + '.png')

@@ -1,12 +1,16 @@
 import matplotlib.image as mpimg
+from skimage import color
 import numpy as np
 import matplotlib.pyplot as plt
 import os, sys
 from PIL import Image
 
 
-def load_image(infilename):
+def load_image(infilename, convert_lab=False):
     data = mpimg.imread(infilename)
+    if convert_lab:
+        color.rgb2lab(data)
+
     return data
 
 
